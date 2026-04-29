@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ECF Consultoria · Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ── Reset & vars ────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0c0c0c;
+  --sb:#111111;
+  --card:#161616;
+  --border:rgba(255,255,255,0.07);
+  --yl:#FFE500;
+  --yd:rgba(255,229,0,0.12);
+  --gn:#25D366;
+  --pu:#7C4DFF;
+  --pul:#B39DDB;
+  --cy:#4DFFF8;
+  --or:#FF6B35;
+  --bl:#4D9FFF;
+  --txt:#fff;
+  --mu:rgba(255,255,255,0.4);
+  --sw:230px;
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--txt);font-size:13px}
+
+/* ── Sidebar ─────────────────────────────────────────── */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sw);background:var(--sb);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+.sb-logo{padding:16px 16px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sb-logo img{width:32px;height:32px;object-fit:contain;border-radius:6px}
+.sb-logo-ph{width:32px;height:32px;background:var(--yl);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000;flex-shrink:0}
+.sb-brand{font-size:13px;font-weight:800;color:var(--yl);line-height:1.15}
+.sb-sub{font-size:10px;color:var(--mu);margin-top:1px}
+
+.sb-sec{padding:12px 16px 5px;font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.12em;flex-shrink:0}
+.sb-pills{padding:0 10px;overflow-y:auto;flex-shrink:0;max-height:180px}
+.sb-pills.days-list{flex:1;max-height:none}
+
+.pill-btn{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border-radius:8px;background:none;border:none;color:var(--mu);font-size:11px;cursor:pointer;margin-bottom:2px;transition:all .14s;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill-btn .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.35}
+.pill-btn:hover{background:var(--yd);color:var(--txt)}
+.pill-btn.on{background:var(--yd);color:var(--yl);font-weight:600}
+.pill-btn.on .dot{opacity:1}
+
+.sb-divider{height:1px;background:var(--border);margin:6px 16px}
+
+.sb-sum{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0}
+.sb-sum-ttl{font-size:9px;text-transform:uppercase;color:var(--mu);letter-spacing:.1em;margin-bottom:8px}
+.sb-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.sb-lbl{font-size:11px;color:var(--mu)}
+.sb-val{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--yl)}
+.sb-row.gn .sb-val{color:var(--gn)}
+.sb-row.pu .sb-val{color:var(--pul)}
+.sb-row.bl .sb-val{color:var(--bl)}
+.sb-row.wh .sb-val{color:var(--txt)}
+
+/* ── Main ────────────────────────────────────────────── */
+.main{margin-left:var(--sw);min-height:100vh;padding:22px 22px 0;display:flex;flex-direction:column;gap:16px}
+
+/* ── Header ──────────────────────────────────────────── */
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px}
+.hdr h1{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.hdr h1 em{color:var(--yl);font-style:normal}
+.hdr-range{font-size:11px;color:var(--mu);margin-top:3px}
+.hdr-center{display:flex;align-items:center;gap:10px}
+.camp-select{background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-size:12px;padding:7px 30px 7px 12px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .15s;max-width:320px}
+.camp-select:focus,.camp-select:hover{border-color:rgba(255,229,0,.4)}
+.camp-select option{background:#1c1c1c}
+.hdr-right{text-align:right;font-size:11px;color:var(--mu)}
+.hdr-next{margin-top:3px;color:rgba(255,229,0,.45);font-size:10px}
+
+/* ── Card ────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px}
+.card-ttl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);padding:13px 16px 0;display:flex;justify-content:space-between;align-items:center}
+.bsm{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600}
+.bsm-yl{background:var(--yd);color:var(--yl)}
+.bsm-gn{background:rgba(37,211,102,.12);color:var(--gn)}
+.bsm-pu{background:rgba(124,77,255,.15);color:var(--pul)}
+.bsm-bl{background:rgba(77,159,255,.12);color:var(--bl)}
+.bsm-wh{background:rgba(255,255,255,.07);color:rgba(255,255,255,.5)}
+
+/* ── Row 1: Gauges + Chart ───────────────────────────── */
+.row1{display:grid;grid-template-columns:1fr 1fr 1fr 2.3fr;gap:14px;align-items:start}
+
+/* hover expand */
+.gcrd,.kcrd,.xcrd{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.gcrd:hover,.kcrd:hover,.xcrd:hover{transform:scale(1.04) translateY(-3px);border-color:rgba(255,229,0,.38);box-shadow:0 10px 36px rgba(0,0,0,.55);z-index:2;position:relative}
+
+.gcrd{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 12px 16px;display:flex;flex-direction:column;align-items:center;height:230px;justify-content:center}
+.g-lbl{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;text-align:center;margin-bottom:10px}
+.g-wrap{position:relative;width:108px;height:108px}
+.g-wrap svg{width:100%;height:100%;display:block}
+.g-trk{fill:none;stroke:rgba(255,255,255,.06);stroke-width:9}
+.g-arc{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .75s cubic-bezier(.4,0,.2,1)}
+.g-ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.g-num{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.g-unit{font-size:9px;color:var(--mu);margin-top:1px}
+.g-foot{font-size:10px;color:var(--mu);margin-top:6px;text-align:center}
+
+.ccrd{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;height:230px;display:flex;flex-direction:column}
+.ccrd canvas{display:block;width:100%!important;flex:1;min-height:0}
+
+/* ── Row 2: KPI strip ────────────────────────────────── */
+.row2{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kcrd{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 16px 13px;position:relative;overflow:hidden}
+.kcrd::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;background:var(--yl)}
+.kcrd.gn::before{background:var(--gn)}
+.kcrd.pu::before{background:var(--pu)}
+.kcrd.bl::before{background:var(--bl)}
+.kcrd.mu::before{background:rgba(255,255,255,.18)}
+.k-lbl{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.k-val{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--yl);line-height:1}
+.kcrd.gn .k-val{color:var(--gn)}
+.kcrd.pu .k-val{color:var(--pul)}
+.kcrd.bl .k-val{color:var(--bl)}
+.kcrd.mu .k-val{color:var(--txt)}
+.k-sub{font-size:11px;color:var(--mu);margin-top:5px}
+
+/* ── Row 3: Conversão + CPM + CTR ────────────────────── */
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.xcrd{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+.x-ico{font-size:20px;margin-bottom:4px}
+.x-lbl{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.x-num{font-size:36px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.x-num.yl{color:var(--yl)}
+.x-num.gn{color:var(--gn)}
+.x-num.pu{color:var(--pul)}
+.x-num.bl{color:var(--bl)}
+.x-cst{font-size:12px;color:var(--mu);margin-top:6px}
+.x-cst span{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+.pbr{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-top:10px}
+.pbf{height:100%;border-radius:3px;transition:width .7s ease}
+.pbf.yl{background:var(--yl)}
+.pbf.gn{background:var(--gn)}
+.pbf.pu{background:var(--pu)}
+.pbf.bl{background:var(--bl)}
+.pb-pct{font-size:10px;color:var(--mu);margin-top:4px}
+
+/* ── Campaign table ──────────────────────────────────── */
+.tbl-crd{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tbl-hdr{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;border-bottom:1px solid var(--border)}
+.tbl-ttl{font-size:13px;font-weight:600}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
+th{padding:9px 14px;text-align:right;font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--mu);background:rgba(255,255,255,.02);cursor:pointer;border-bottom:1px solid var(--border);user-select:none}
+th:first-child{text-align:left}
+th:hover{color:var(--txt)}
+th.sort-asc::after{content:' ↑';color:var(--yl)}
+th.sort-desc::after{content:' ↓';color:var(--yl)}
+td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,229,0,.025)}
+.tr{text-align:right}
+.mono{font-variant-numeric:tabular-nums}
+.yl{color:var(--yl);font-weight:600}
+.gn-t{color:var(--gn);font-weight:600}
+.pu-t{color:var(--pul);font-weight:600}
+.bl-t{color:var(--bl);font-weight:600}
+.dim{color:var(--mu)}
+.trunc{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sbdg{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
+.s-act{background:rgba(37,211,102,.12);color:var(--gn)}
+.s-pau{background:rgba(255,255,255,.06);color:var(--mu)}
+.obj-leads{background:rgba(77,159,255,.12);color:var(--bl);font-size:9px;padding:2px 6px;border-radius:6px;font-weight:600}
+.obj-sales{background:rgba(255,229,0,.12);color:var(--yl);font-size:9px;padding:2px 6px;border-radius:6px;font-weight:600}
+
+/* ── Creative grid ───────────────────────────────────── */
+.cr-wrap{margin-bottom:22px}
+.cr-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cr-ttl{font-size:13px;font-weight:600}
+.cr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(192px,1fr));gap:14px}
+.crcrd{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:transform .14s,border-color .14s}
+.crcrd:hover{transform:translateY(-3px);border-color:rgba(255,229,0,.3);box-shadow:0 8px 28px rgba(0,0,0,.5)}
+.cr-thumb-wrap{position:relative;display:block;overflow:hidden}
+.cr-thumb-wrap:hover .cr-play{opacity:1}
+.cr-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);opacity:0;transition:opacity .16s;font-size:36px;text-decoration:none}
+.cr-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.cr-ph{width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;background:#181818;font-size:26px}
+.cr-preview-btn{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:10px;padding:6px 0;border-radius:8px;background:rgba(255,229,0,.08);border:1px solid rgba(255,229,0,.2);color:var(--yl);font-size:11px;font-weight:600;text-decoration:none;transition:background .15s,border-color .15s}
+.cr-preview-btn:hover{background:rgba(255,229,0,.18);border-color:rgba(255,229,0,.5)}
+.cr-body{padding:11px 12px 12px}
+.cr-nm{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.cr-cp{font-size:10px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:9px}
+.cr-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.cs{background:rgba(255,255,255,.04);border-radius:6px;padding:5px 7px}
+.cs-l{font-size:9px;text-transform:uppercase;color:var(--mu);letter-spacing:.05em;margin-bottom:2px}
+.cs-v{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.cs-v.yl{color:var(--yl)}
+.cs-v.wh{color:var(--txt)}
+.cs-v.gn{color:var(--gn)}
+.cs-v.pu{color:var(--pul)}
+.cs-v.bl{color:var(--bl)}
+
+/* ── Footer ──────────────────────────────────────────── */
+.footer{font-size:11px;color:var(--mu);text-align:center;padding:6px 0 18px}
+.footer strong{color:rgba(255,255,255,.55)}
+
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
+
+/* ── Empty state ─────────────────────────────────────── */
+.empty{padding:40px;text-align:center;color:var(--mu);font-size:13px}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media(max-width:1200px){.row1{grid-template-columns:1fr 1fr 1fr}.chart-col{grid-column:1/-1;order:-1}}
+@media(max-width:900px){.row1{grid-template-columns:1fr 1fr}.row2{grid-template-columns:repeat(2,1fr)}.row3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){:root{--sw:0px}.sidebar{display:none}.row2{grid-template-columns:1fr 1fr}.row3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ────────────────────────────────────────── -->
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-ph" id="sb-logo-ph">ECF</div>
+    <div>
+      <div class="sb-brand" id="sb-name">ECF Consultoria</div>
+      <div class="sb-sub">Ads Dashboard · Conta 001</div>
+    </div>
+  </div>
+
+  <!-- Campaign filter -->
+  <div class="sb-sec">Campanha</div>
+  <div class="sb-pills" id="camp-pills"></div>
+
+  <div class="sb-divider"></div>
+
+  <!-- Day filter -->
+  <div class="sb-sec">Dias com gasto</div>
+  <div class="sb-pills days-list" id="day-pills"></div>
+
+  <!-- Summary -->
+  <div class="sb-sum">
+    <div class="sb-sum-ttl">Resumo 7 dias</div>
+    <div class="sb-row"><span class="sb-lbl">💰 Gasto</span><span class="sb-val" id="ss-spend">—</span></div>
+    <div class="sb-row bl"><span class="sb-lbl">💬 Msgs</span><span class="sb-val" id="ss-msgs">—</span></div>
+    <div class="sb-row wh"><span class="sb-lbl">🎯 Leads</span><span class="sb-val" id="ss-leads">—</span></div>
+    <div class="sb-row gn"><span class="sb-lbl">🛒 Compras</span><span class="sb-val" id="ss-pur">—</span></div>
+    <div class="sb-row pu"><span class="sb-lbl">📊 CPM</span><span class="sb-val" id="ss-cpm">—</span></div>
+  </div>
+</nav>
+
+<!-- ── MAIN ───────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- Header -->
+  <div class="hdr">
+    <div>
+      <h1><em id="hdr-name">ECF Consultoria</em> · Dashboard</h1>
+      <div class="hdr-range" id="hdr-range">—</div>
+    </div>
+    <div class="hdr-center">
+      <select class="camp-select" id="camp-select" onchange="onCampSelect(this.value)">
+        <option value="all">📊 Todas as campanhas</option>
+      </select>
+    </div>
+    <div class="hdr-right">
+      <div id="hdr-updated">—</div>
+      <div class="hdr-next" id="hdr-next">—</div>
+    </div>
+  </div>
+
+  <!-- Row 1 — Gauges + Chart -->
+  <div class="row1">
+    <!-- CTR gauge -->
+    <div class="gcrd">
+      <div class="g-lbl">CTR</div>
+      <div class="g-wrap">
+        <svg viewBox="0 0 108 108">
+          <circle class="g-trk" cx="54" cy="54" r="45" transform="rotate(-90 54 54)"/>
+          <circle id="g-ctr" class="g-arc" cx="54" cy="54" r="45"
+            stroke="#FFE500" stroke-dasharray="282.74" stroke-dashoffset="282.74"
+            transform="rotate(-90 54 54)"/>
+        </svg>
+        <div class="g-ctr">
+          <span class="g-num" id="gn-ctr" style="color:#FFE500">—</span>
+          <span class="g-unit">Cliques/Impr.</span>
+        </div>
+      </div>
+      <div class="g-foot" id="gf-ctr">—</div>
+    </div>
+
+    <!-- Lead Conv gauge -->
+    <div class="gcrd">
+      <div class="g-lbl">Conv. Leads</div>
+      <div class="g-wrap">
+        <svg viewBox="0 0 108 108">
+          <circle class="g-trk" cx="54" cy="54" r="45" transform="rotate(-90 54 54)"/>
+          <circle id="g-lp" class="g-arc" cx="54" cy="54" r="45"
+            stroke="#4D9FFF" stroke-dasharray="282.74" stroke-dashoffset="282.74"
+            transform="rotate(-90 54 54)"/>
+        </svg>
+        <div class="g-ctr">
+          <span class="g-num" id="gn-lp" style="color:#4D9FFF">—</span>
+          <span class="g-unit">Leads/Clique</span>
+        </div>
+      </div>
+      <div class="g-foot" id="gf-lp">—</div>
+    </div>
+
+    <!-- Msg Rate gauge -->
+    <div class="gcrd">
+      <div class="g-lbl">Taxa Msgs</div>
+      <div class="g-wrap">
+        <svg viewBox="0 0 108 108">
+          <circle class="g-trk" cx="54" cy="54" r="45" transform="rotate(-90 54 54)"/>
+          <circle id="g-msg" class="g-arc" cx="54" cy="54" r="45"
+            stroke="#25D366" stroke-dasharray="282.74" stroke-dashoffset="282.74"
+            transform="rotate(-90 54 54)"/>
+        </svg>
+        <div class="g-ctr">
+          <span class="g-num" id="gn-msg" style="color:#25D366">—</span>
+          <span class="g-unit">Msgs/1k Impr.</span>
+        </div>
+      </div>
+      <div class="g-foot" id="gf-msg">—</div>
+    </div>
+
+    <!-- Line chart -->
+    <div class="ccrd chart-col">
+      <div class="card-ttl">
+        <span id="chart-title">Gasto · Leads · Msgs · Compras (diário)</span>
+        <span class="bsm bsm-yl" id="chart-badge">—</span>
+      </div>
+      <canvas id="chart" style="margin-top:10px"></canvas>
+    </div>
+  </div>
+
+  <!-- Row 2 — KPI strip -->
+  <div class="row2">
+    <div class="kcrd">
+      <div class="k-lbl">💰 Gasto Total</div>
+      <div class="k-val" id="k-spend">—</div>
+      <div class="k-sub" id="k-spend-sub">—</div>
+    </div>
+    <div class="kcrd bl">
+      <div class="k-lbl">💬 Mensagens</div>
+      <div class="k-val" id="k-msgs">—</div>
+      <div class="k-sub" id="k-msgs-sub">—</div>
+    </div>
+    <div class="kcrd mu">
+      <div class="k-lbl">🎯 Leads</div>
+      <div class="k-val" id="k-leads">—</div>
+      <div class="k-sub" id="k-leads-sub">—</div>
+    </div>
+    <div class="kcrd gn">
+      <div class="k-lbl">🛒 Compras</div>
+      <div class="k-val" id="k-pur">—</div>
+      <div class="k-sub" id="k-pur-sub">—</div>
+    </div>
+  </div>
+
+  <!-- Row 3 — Funnel extras -->
+  <div class="row3">
+    <!-- Add to Cart / Initiate -->
+    <div class="xcrd">
+      <div class="x-ico">🛍️</div>
+      <div class="x-lbl">Adicionou ao Carrinho</div>
+      <div class="x-num pu" id="k-atc">—</div>
+      <div class="x-cst">Iniciou checkout: <span id="k-ini">—</span></div>
+      <div class="pbr"><div class="pbf pu" id="pb-atc" style="width:0%"></div></div>
+      <div class="pb-pct" id="pb-atc-pct">—% das impressões (‰)</div>
+    </div>
+
+    <!-- CPM + CPMsg + CPL + CPV -->
+    <div class="xcrd">
+      <div class="x-ico">📊</div>
+      <div class="x-lbl">Custos por resultado</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <div class="cs"><div class="cs-l">CPM</div><div class="cs-v yl" id="k-cpm">—</div></div>
+        <div class="cs"><div class="cs-l">CPMsg</div><div class="cs-v bl" id="k-cpmsg">—</div></div>
+        <div class="cs"><div class="cs-l">CPL</div><div class="cs-v wh" id="k-cpl">—</div></div>
+        <div class="cs"><div class="cs-l">CPV</div><div class="cs-v gn" id="k-cpv">—</div></div>
+      </div>
+    </div>
+
+    <!-- Impressões + Link Clicks -->
+    <div class="xcrd">
+      <div class="x-ico">📢</div>
+      <div class="x-lbl">Alcance &amp; Tráfego</div>
+      <div class="x-num yl" id="k-impr">—</div>
+      <div class="x-cst">Impressões no período</div>
+      <div style="margin-top:12px">
+        <div class="cs"><div class="cs-l">Cliques no link</div><div class="cs-v wh" id="k-lclicks">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaign table -->
+  <div class="tbl-crd">
+    <div class="tbl-hdr">
+      <span class="tbl-ttl">Campanhas</span>
+      <span class="bsm bsm-yl" id="camps-badge">—</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="srt('name')">Campanha</th>
+            <th onclick="srt('objective')">Tipo</th>
+            <th class="tr" onclick="srt('spend')">Gasto</th>
+            <th class="tr" onclick="srt('msgs')">💬 Msgs</th>
+            <th class="tr" onclick="srt('cp_msg')">CPMsg</th>
+            <th class="tr" onclick="srt('leads')">🎯 Leads</th>
+            <th class="tr" onclick="srt('cpl')">CPL</th>
+            <th class="tr" onclick="srt('purchases')">🛒 Compras</th>
+            <th class="tr" onclick="srt('cpv')">CPV</th>
+            <th class="tr" onclick="srt('ctr')">CTR</th>
+            <th class="tr" onclick="srt('cpm')">CPM</th>
+            <th class="tr" onclick="srt('impressions')">Impr.</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="camps-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Creatives -->
+  <div class="cr-wrap">
+    <div class="cr-hdr">
+      <span class="cr-ttl">Criativos Ativos</span>
+      <span class="bsm bsm-yl" id="ads-badge">—</span>
+    </div>
+    <div class="cr-grid" id="cr-grid"></div>
+  </div>
+
+  <div class="footer" id="footer">—</div>
+</main>
+
+<script>
+let D = null, selCamp = 'all', selDay = 'all', ch = null, srtK = 'spend', srtDir = -1;
+const CIRC = 282.74;
+
+/* ── Init ────────────────────────────────────────────── */
+async function init() {
+  try {
+    const r = await fetch('data.json?t=' + Date.now());
+    D = await r.json();
+    populateCampSelect();
+    render();
+  } catch(e) {
+    document.querySelector('.main').innerHTML =
+      '<div class="empty">Erro ao carregar dados.<br>Verifique o console.</div>';
+    console.error(e);
+  }
+}
+
+/* ── Formatters ──────────────────────────────────────── */
+const fmtC = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtN = v => Number(v||0).toLocaleString('pt-BR');
+const fmtP = v => Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + '%';
+const fd   = s => { const d=new Date(s+'T12:00:00Z'); return d.getUTCDate().toString().padStart(2,'0')+'/'+(d.getUTCMonth()+1).toString().padStart(2,'0')+'/'+d.getUTCFullYear(); };
+const fdt  = iso => new Date(iso).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const esc  = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* ── Gauge helper ────────────────────────────────────── */
+function setGauge(id, value, max) {
+  const el = document.getElementById('g-' + id);
+  if(el) el.style.strokeDashoffset = CIRC * (1 - Math.min(value/(max||100),1));
+}
+
+/* ── Get current data source (account or campaign) ───── */
+function getSource() {
+  if(selCamp === 'all') return D;
+  return D.campaigns.find(c => c.id === selCamp) || D;
+}
+
+function getMet(date) {
+  const src = getSource();
+  if(!date || date === 'all') return src.summary || src;
+  return (src.daily || []).find(d => d.date === date) || {spend:0,msgs:0,leads:0,purchases:0};
+}
+
+/* ── Populate campaign select + pills ───────────────── */
+function populateCampSelect() {
+  const sel = document.getElementById('camp-select');
+  sel.innerHTML = '<option value="all">📊 Todas as campanhas</option>';
+  (D.campaigns || []).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    const icon = c.objective === 'OUTCOME_SALES' ? '🛒' : '🎯';
+    opt.textContent = icon + ' ' + c.name.replace(/\[([^\]]+)\]/g,'$1').trim().substring(0,45);
+    sel.appendChild(opt);
+  });
+}
+
+/* ── Render ──────────────────────────────────────────── */
+function render() {
+  const dr = D.date_range;
+  document.getElementById('hdr-name').textContent  = 'ECF Consultoria';
+  document.getElementById('hdr-range').textContent = fd(dr.since) + ' → ' + fd(dr.until);
+  document.getElementById('hdr-updated').textContent = 'Atualizado ' + fdt(D.last_updated);
+  const next = new Date(new Date(D.last_updated).getTime() + 6*3600*1000);
+  document.getElementById('hdr-next').textContent = 'Próxima: ' + fdt(next.toISOString());
+  document.title = 'ECF Consultoria · Dashboard';
+
+  // Sidebar always shows account-level 7d summary
+  const s = D.summary;
+  document.getElementById('ss-spend').textContent = fmtC(s.spend);
+  document.getElementById('ss-msgs').textContent  = fmtN(s.msgs);
+  document.getElementById('ss-leads').textContent = fmtN(s.leads);
+  document.getElementById('ss-pur').textContent   = fmtN(s.purchases);
+  document.getElementById('ss-cpm').textContent   = fmtC(s.cpm);
+
+  renderCampPills();
+  renderDayPills();
+  updateKPIs(getMet(selDay));
+  renderChart();
+  renderCamps();
+  renderAds();
+
+  document.getElementById('footer').innerHTML =
+    `Conta: <strong>act_310500857276337</strong> &nbsp;·&nbsp;
+     Atualizado: <strong>${fdt(D.last_updated)}</strong> &nbsp;·&nbsp;
+     Próxima: <strong>${fdt(next.toISOString())}</strong> &nbsp;·&nbsp;
+     Atualiza a cada 6 horas via GitHub Actions`;
+}
+
+/* ── Campaign pills ──────────────────────────────────── */
+function renderCampPills() {
+  const c = document.getElementById('camp-pills');
+  c.innerHTML = '';
+  const all = mkPill('Todas', selCamp === 'all', () => onCampSelect('all'));
+  c.appendChild(all);
+  (D.campaigns || []).forEach(camp => {
+    const icon = camp.objective === 'OUTCOME_SALES' ? '🛒 ' : '🎯 ';
+    const lbl  = icon + camp.name.replace(/\[([^\]]+)\]/g,'$1').trim().substring(0,22);
+    const btn  = mkPill(lbl, selCamp === camp.id, () => onCampSelect(camp.id));
+    c.appendChild(btn);
+  });
+}
+
+function mkPill(label, active, onclick) {
+  const btn = document.createElement('button');
+  btn.className = 'pill-btn' + (active ? ' on' : '');
+  btn.innerHTML = `<span class="dot"></span>${esc(label)}`;
+  btn.onclick = onclick;
+  return btn;
+}
+
+/* ── Day pills ───────────────────────────────────────── */
+function renderDayPills() {
+  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const src  = getSource();
+  const c    = document.getElementById('day-pills');
+  c.innerHTML = '';
+
+  const all = mkPill('Todos os dias', selDay === 'all', () => selDate('all'));
+  c.appendChild(all);
+
+  ((src.daily || D.daily) || []).filter(d => d.spend > 0).forEach(d => {
+    const dt  = new Date(d.date + 'T12:00:00Z');
+    const lbl = days[dt.getUTCDay()] + ' ' +
+                dt.getUTCDate().toString().padStart(2,'0') + '/' +
+                (dt.getUTCMonth()+1).toString().padStart(2,'0');
+    const btn = mkPill(lbl, selDay === d.date, () => selDate(d.date));
+    btn.dataset.d = d.date;
+    c.appendChild(btn);
+  });
+}
+
+function onCampSelect(campId) {
+  selCamp = campId;
+  selDay  = 'all';
+  document.getElementById('camp-select').value = campId;
+  renderCampPills();
+  renderDayPills();
+  updateKPIs(getMet('all'));
+  renderChart();
+  renderCamps();
+  renderAds();
+  if(ch) highlightDay(null);
+}
+
+function selDate(date) {
+  selDay = date;
+  renderDayPills();
+  updateKPIs(getMet(date));
+  if(ch) highlightDay(date);
+}
+
+/* ── KPIs + Gauges ───────────────────────────────────── */
+function updateKPIs(m) {
+  const sp   = m.spend       || 0;
+  const msgs = m.msgs        || 0;
+  const lds  = m.leads       || 0;
+  const pur  = m.purchases   || 0;
+  const impr = m.impressions || 0;
+  const clk  = m.link_clicks || 0;
+  const atc  = m.add_to_cart || 0;
+  const ini  = m.initiate_checkout || 0;
+
+  // KPI cards
+  document.getElementById('k-spend').textContent     = fmtC(sp);
+  document.getElementById('k-spend-sub').textContent = fmtN(impr) + ' impressões';
+  document.getElementById('k-msgs').textContent      = fmtN(msgs);
+  document.getElementById('k-msgs-sub').textContent  = msgs > 0 ? 'CPMsg: ' + fmtC(sp/msgs) : '—';
+  document.getElementById('k-leads').textContent     = fmtN(lds);
+  document.getElementById('k-leads-sub').textContent = lds  > 0 ? 'CPL: ' + fmtC(sp/lds)  : '—';
+  document.getElementById('k-pur').textContent       = fmtN(pur);
+  document.getElementById('k-pur-sub').textContent   = pur  > 0 ? 'CPV: ' + fmtC(sp/pur)  : '—';
+
+  // Row 3
+  document.getElementById('k-atc').textContent  = fmtN(atc);
+  document.getElementById('k-ini').textContent  = fmtN(ini);
+  document.getElementById('k-cpm').textContent  = fmtC(m.cpm || (impr > 0 ? sp/impr*1000 : 0));
+  document.getElementById('k-cpmsg').textContent= msgs > 0 ? fmtC(sp/msgs) : '—';
+  document.getElementById('k-cpl').textContent  = lds  > 0 ? fmtC(sp/lds)  : '—';
+  document.getElementById('k-cpv').textContent  = pur  > 0 ? fmtC(sp/pur)  : '—';
+  document.getElementById('k-impr').textContent = fmtN(impr);
+  document.getElementById('k-lclicks').textContent = fmtN(clk);
+
+  // Progress bar for add to cart
+  const atcPct = impr > 0 ? Math.min((atc/impr)*1000*10, 100) : 0;
+  document.getElementById('pb-atc').style.width = atcPct.toFixed(1) + '%';
+  document.getElementById('pb-atc-pct').textContent = impr > 0 ? (atc/impr*1000).toFixed(2) + '‰ das impressões' : '—';
+
+  // Gauges
+  const ctr    = impr > 0 ? clk/impr*100  : 0;
+  const lpconv = clk  > 0 ? lds/clk*100   : 0;
+  const msgk   = impr > 0 ? msgs/impr*1000: 0;
+
+  setGauge('ctr', ctr,    5);
+  setGauge('lp',  lpconv, 50);
+  setGauge('msg', msgk,   10);
+
+  document.getElementById('gn-ctr').textContent = fmtP(ctr);
+  document.getElementById('gn-lp').textContent  = fmtP(lpconv);
+  document.getElementById('gn-msg').textContent = msgk.toFixed(1);
+  document.getElementById('gf-ctr').textContent = fmtN(clk) + ' cliques no link';
+  document.getElementById('gf-lp').textContent  = fmtN(lds) + ' leads';
+  document.getElementById('gf-msg').textContent = fmtN(msgs) + ' msgs';
+
+  document.getElementById('chart-badge').textContent = D.date_range.since + ' → ' + D.date_range.until;
+}
+
+/* ── Chart ───────────────────────────────────────────── */
+function renderChart() {
+  if(ch){ ch.destroy(); ch = null; }
+  const src    = getSource();
+  const daily  = src.daily || D.daily || [];
+  const labels = daily.map(d => {
+    const dt = new Date(d.date+'T12:00:00Z');
+    return dt.getUTCDate().toString().padStart(2,'0')+'/'+(dt.getUTCMonth()+1).toString().padStart(2,'0');
+  });
+
+  const ctx = document.getElementById('chart').getContext('2d');
+  ch = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        { type:'bar',  label:'Gasto (R$)', data:daily.map(d=>d.spend||0),
+          backgroundColor:'rgba(255,229,0,.6)', yAxisID:'y', borderRadius:3, order:4 },
+        { type:'line', label:'Leads',  data:daily.map(d=>d.leads||0),
+          borderColor:'#4D9FFF', pointBackgroundColor:'#4D9FFF',
+          pointRadius:3, tension:0.3, fill:false, yAxisID:'y2', order:1 },
+        { type:'line', label:'Msgs',   data:daily.map(d=>d.msgs||0),
+          borderColor:'#25D366', pointBackgroundColor:'#25D366',
+          pointRadius:3, tension:0.3, fill:false, yAxisID:'y2', order:2 },
+        { type:'line', label:'Compras',data:daily.map(d=>d.purchases||0),
+          borderColor:'#B39DDB', pointBackgroundColor:'#B39DDB',
+          pointRadius:3, tension:0.3, fill:false, yAxisID:'y2', order:3,
+          borderDash:[4,3] },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:true, labels:{ color:'rgba(255,255,255,.4)', boxWidth:10, font:{size:10}, padding:12 }},
+        tooltip:{ backgroundColor:'#1c1c1c', borderColor:'rgba(255,229,0,.25)', borderWidth:1,
+          titleColor:'#fff', bodyColor:'rgba(255,255,255,.65)',
+          callbacks:{ label: c => {
+            if(c.dataset.yAxisID==='y') return ' Gasto: R$ '+c.parsed.y.toFixed(2);
+            return ` ${c.dataset.label}: ${c.parsed.y}`;
+          }}
+        }
+      },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'rgba(255,255,255,.35)',font:{size:10}} },
+        y:{ position:'left',  grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'rgba(255,229,0,.6)',font:{size:10},callback:v=>'R$'+v.toFixed(0)} },
+        y2:{ position:'right', grid:{drawOnChartArea:false}, ticks:{color:'rgba(255,255,255,.35)',font:{size:10}} },
+      }
+    }
+  });
+}
+
+function highlightDay(date) {
+  if(!ch || !date || date==='all') { ch.data.datasets.forEach(d => d.pointRadius = Array(ch.data.labels.length).fill(3)); ch.update('none'); return; }
+  const src   = getSource();
+  const daily = src.daily || D.daily || [];
+  const idx   = daily.findIndex(d => d.date === date);
+  ch.data.datasets.forEach(ds => {
+    ds.pointRadius = daily.map((_,i) => i===idx ? 7 : 2);
+  });
+  ch.update('none');
+}
+
+/* ── Campaign table ──────────────────────────────────── */
+function renderCamps() {
+  const tbody = document.getElementById('camps-body');
+  let camps   = selCamp === 'all' ? D.campaigns : D.campaigns.filter(c => c.id === selCamp);
+
+  // Apply day filter
+  const rows = camps.map(c => {
+    if(!selDay || selDay === 'all') return {...c};
+    const d = (c.daily||[]).find(x => x.date === selDay);
+    return d ? {...c,...d} : {...c,spend:0,msgs:0,leads:0,purchases:0,impressions:0};
+  }).filter(c => c.spend > 0);
+
+  rows.sort((a,b) => {
+    const av=a[srtK]??0, bv=b[srtK]??0;
+    return typeof av==='string' ? av.localeCompare(bv)*srtDir : (av-bv)*srtDir;
+  });
+
+  document.getElementById('camps-badge').textContent = rows.length + ' campanha' + (rows.length!==1?'s':'');
+
+  tbody.innerHTML = rows.map(c => `
+    <tr>
+      <td class="trunc" title="${esc(c.name)}">${esc(c.name)}</td>
+      <td><span class="${c.objective==='OUTCOME_SALES'?'obj-sales':'obj-leads'}">${c.objective==='OUTCOME_SALES'?'Vendas':'Leads'}</span></td>
+      <td class="tr mono yl">${fmtC(c.spend)}</td>
+      <td class="tr mono bl-t">${fmtN(c.msgs||0)}</td>
+      <td class="tr mono">${(c.msgs||0)>0?fmtC((c.spend||0)/(c.msgs)):'<span class="dim">—</span>'}</td>
+      <td class="tr mono">${fmtN(c.leads||0)}</td>
+      <td class="tr mono">${(c.cpl||0)>0?fmtC(c.cpl):'<span class="dim">—</span>'}</td>
+      <td class="tr mono gn-t">${fmtN(c.purchases||0)}</td>
+      <td class="tr mono">${(c.cpv||0)>0?fmtC(c.cpv):'<span class="dim">—</span>'}</td>
+      <td class="tr mono dim">${fmtP(c.ctr||0)}</td>
+      <td class="tr mono dim">${fmtC(c.cpm||0)}</td>
+      <td class="tr mono dim">${fmtN(c.impressions||0)}</td>
+      <td><span class="sbdg ${c.status==='ACTIVE'?'s-act':'s-pau'}">${c.status==='ACTIVE'?'● Ativa':'⏸ Pausada'}</span></td>
+    </tr>`).join('');
+
+  // Update sort arrows
+  document.querySelectorAll('th').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    const k = th.getAttribute('onclick')?.match(/srt\('([^']+)'\)/)?.[1];
+    if(k===srtK) th.classList.add(srtDir===-1?'sort-desc':'sort-asc');
+  });
+}
+
+function srt(key) {
+  srtDir = key===srtK ? -srtDir : -1;
+  srtK   = key;
+  renderCamps();
+}
+
+/* ── Creative cards ──────────────────────────────────── */
+function renderAds(ads) {
+  const grid = document.getElementById('cr-grid');
+  let src = selCamp === 'all' ? D.ads : D.ads.filter(a => a.campaign_id === selCamp);
+  const sorted = [...src].sort((a,b) => (b.spend||0)-(a.spend||0));
+  document.getElementById('ads-badge').textContent = sorted.length + ' criativo' + (sorted.length!==1?'s':'');
+
+  if(!sorted.length) { grid.innerHTML = '<div class="empty">Nenhum criativo com gasto no período.</div>'; return; }
+
+  grid.innerHTML = sorted.map(ad => {
+    const previewUrl = ad.preview_url || '';
+    const imgTag = ad.thumbnail
+      ? `<img src="${esc(ad.thumbnail)}" class="cr-thumb" alt="${esc(ad.name)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=cr-ph>🎬</div>'">`
+      : `<div class="cr-ph">🎬</div>`;
+    const thumb = previewUrl
+      ? `<a href="${esc(previewUrl)}" target="_blank" rel="noopener" class="cr-thumb-wrap">${imgTag}<span class="cr-play">▶</span></a>`
+      : `<div class="cr-thumb-wrap">${imgTag}</div>`;
+
+    const sp  = ad.spend || 0;
+    const msg = ad.msgs || 0;
+    const lds = ad.leads || 0;
+    const pur = ad.purchases || 0;
+
+    const metricRows = [
+      {l:'Gasto',   v:fmtC(sp),        cls:'yl'},
+      {l:'Msgs',    v:fmtN(msg),       cls:'bl'},
+      {l:'CPMsg',   v:msg>0?fmtC(sp/msg):'—', cls:'wh'},
+      {l:'Leads',   v:fmtN(lds),       cls:'wh'},
+      {l:'CPL',     v:lds>0?fmtC(sp/lds):'—', cls:'wh'},
+      {l:'Compras', v:fmtN(pur),       cls:'gn'},
+    ].map(m=>`<div class="cs"><div class="cs-l">${m.l}</div><div class="cs-v ${m.cls}">${m.v}</div></div>`).join('');
+
+    return `<div class="crcrd">
+      ${thumb}
+      <div class="cr-body">
+        <div class="cr-nm" title="${esc(ad.name)}">${esc(ad.name)}</div>
+        <div class="cr-cp">${esc(ad.campaign_name||ad.adset||'')}</div>
+        <div class="cr-stats">${metricRows}</div>
+        ${previewUrl?`<a href="${esc(previewUrl)}" target="_blank" rel="noopener" class="cr-preview-btn">▶ Ver criativo</a>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+init();
+</script>
+</body>
+</html>
